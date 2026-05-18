@@ -4,10 +4,11 @@
 
 NSAI v2 builds a graph of immediate word co-occurrences from text and tracks which sentence each edge came from. When asked whether two words are connected, the system finds paths through the graph and classifies them: **assertion** — all edges of a path live in a common context (the connection is stated directly in some sentence), **reasoning** — edges cross sentence boundaries (a chain assembled from independent sources). No dependency parsing, no POS tags, no lemmatization. Any language, any sequence of symbols.
 
+> **Explainability is structural, not post-hoc.** Every answer points to specific corpus sentences from which it was derived. There is no internal state hiding the logic — the graph and the answer are made of the same observations. This is a different kind of explainability than attention visualization or asking a black-box model to narrate its reasoning after the fact.
+
 ## What this is
 
 - Discrete observation storage from text — no compression into weights, no training.
-- Built-in explainability: any answer can point to the specific corpus sentences it came from.
 - Single-author research project continuing v0.1, rewritten from scratch after reformulating the task.
 
 ## What this is not
