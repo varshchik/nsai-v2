@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual envs
+venv/
+env/
+.venv/
+.env/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project data (DO NOT commit corpora and built artifacts)
+# Corpora are typically third-party copyrighted material; keep them out.
+*.db
+*.sqlite
+*.sqlite3
+*.pkl
+*.pickle
+*.bin
+corpus/
+corpora/
+data/
+*.txt
+*.fb2
+*.epub
+*.pdf
+*.mobi
+
+# But keep example/test fixtures if explicitly included:
+!tests/fixtures/**/*.txt
+!examples/**/*.txt
+
+# Logs
+*.log
+logs/
+
+# Local scratch / outputs
+out/
+output/
+outputs/
+scratch/
+tmp/
+.tmp/
