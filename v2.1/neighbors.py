@@ -173,7 +173,11 @@ class Graph:
                 continue
             if length >= max_w:
                 continue
-            for nb, weight in self.adj[current].items():
+            # sorted() makes iteration order independent of dict-insertion
+            # history, so reloading the same corpus in a different order
+            # yields identical path enumeration. Without this, tie-broken
+            # results drift with insertion order.
+            for nb, weight in sorted(self.adj[current].items()):
                 if nb in visited:
                     continue
                 seq += 1
@@ -238,7 +242,10 @@ class Graph:
           edge_strengths  — co-occurrence counts per edge
           bottleneck      — min edge strength along path
           anchor_window   — (source, positions) of covering window if found
-          junction_nodes  — nodes where adjacent edges don't fit width
+          junction_nodes  — nodes where adjacent edges do not come from
+                            physically contiguous positions in any single
+                            source (i.e. context-switch points; independent
+                            of width)
           width_used      — width parameter applied
         """
         if not path or len(path) < 2:
@@ -258,13 +265,20 @@ class Graph:
                 anchor_window = (src, positions)
                 break
 
+        # Junction detection: two consecutive edges in the path come from
+        # the same physical adjacency in a source iff their stored positions
+        # differ by exactly 1 (each edge stores the position of its left
+        # token, so a pair stream "...x y z..." records (x,y) at p and
+        # (y,z) at p+1). Width is not used here — width governs the
+        # global reasoning-window fit, while junctions are about literal
+        # contiguity in the source stream.
         junctions = []
         for i in range(len(edges) - 1):
             fit = False
             for src in self.sources:
                 pos_i = [p for (s, p) in positions_per_edge[i] if s == src]
-                pos_j = [p for (s, p) in positions_per_edge[i+1] if s == src]
-                if any(abs(pi - pj) <= width for pi in pos_i for pj in pos_j):
+                pos_j = {p for (s, p) in positions_per_edge[i+1] if s == src}
+                if any((pi + 1) in pos_j or (pi - 1) in pos_j for pi in pos_i):
                     fit = True
                     break
             if not fit:
@@ -295,13 +309,23 @@ class Graph:
     # ── morphological similarity ─────────────────────────────────────
     @staticmethod
     def _ngrams(word: str, n: int = NGRAM_SIZE) -> set[str]:
-        if len(word) < n:
-            return {word}
-        return {word[i:i+n] for i in range(len(word) - n + 1)}
+        """Character n-grams with boundary padding (^ start, $ end).
+
+        Padding makes prefix and suffix n-grams structurally distinct
+        from internal ones (so "сократ" and "акрост" don't accidentally
+        match through a shared "кра") and ensures short words (len < n)
+        still produce a useful overlap signature instead of degenerating
+        to the whole word.
+        """
+        padded = f"^{word}$"
+        if len(padded) < n:
+            return {padded}
+        return {padded[i:i+n] for i in range(len(padded) - n + 1)}
 
     def morph_similarity(self, w1: str, w2: str, n: int = NGRAM_SIZE) -> float:
         """Character n-gram Jaccard similarity. No lemmatizer needed.
-        'сократ' vs 'сократа' ≈ 0.80,  'сократ' vs 'платон' = 0.00."""
+        With boundary padding: 'сократ' vs 'сократа' ≈ 0.63,
+        'сократ' vs 'платон' = 0.00."""
         g1, g2 = self._ngrams(w1.lower(), n), self._ngrams(w2.lower(), n)
         if not (g1 and g2):
             return 0.0
